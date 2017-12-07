@@ -1,0 +1,37 @@
+apply from: './gradle/version.gradle'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
+
+group = 'com.github.zellius'
+version plugin_version
+
+task sourcesJar(type: Jar) {
+    classifier 'sources'
+    from sourceSets.main.allSource
+}
+
+task groovydocJar(type: Jar, dependsOn: groovydoc) {
+    classifier 'groovydoc'
+    from groovydoc.destinationDir
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives groovydocJar
+    archives javadocJar
+}
+
+apply plugin: 'maven'
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: uri(repo_name))
+        }
+    }
+}
