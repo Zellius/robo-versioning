@@ -19,9 +19,11 @@ allprojects {
 apply plugin: 'groovy'
 apply from: './gradle/publish.gradle'
 
-dependencies {
-    implementation localGroovy()
-    implementation gradleApi()
+sourceSets.main.groovy.srcDirs = ["src/main/groovy"]
 
+dependencies {
     compileOnly "com.android.tools.build:gradle:3.0.1"
+    compileOnly gradleApi()
+
+    implementation localGroovy()
 }
