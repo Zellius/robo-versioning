@@ -3,6 +3,7 @@ package ru.solodovnikov.roboversioning
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.LibraryExtension
+import com.android.build.gradle.TestExtension
 import com.android.build.gradle.api.BaseVariant
 import org.gradle.api.DomainObjectSet
 import org.gradle.api.GradleException
@@ -16,12 +17,12 @@ class RoboVersioningPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
+        this.project = project
+
         //only if it is Android project
         if (!isAndroidProject()) {
             throw new GradleException('Please apply com.android.application or com.android.library plugin before apply this plugin!')
         }
-
-        this.project = project
 
         def ext = project.extensions.create('gitSettings', RoboVersioningGitExtension)
 
@@ -39,9 +40,13 @@ class RoboVersioningPlugin implements Plugin<Project> {
     private DomainObjectSet<BaseVariant> getAndroidVariants() {
         def androidExtension = getAndroidExt()
         if (isAndroidApplication()) {
-            return (androidExtensiona as AppExtension).getApplicationVariants()
-        } else {
+            return (androidExtension as AppExtension).getApplicationVariants()
+        } else if (isAndroidLibrary()) {
             return (androidExtension as LibraryExtension).getLibraryVariants()
+        } else if (isAndroidTest()) {
+            return (androidExtension as TestExtension).getApplicationVariants()
+        } else {
+            throw new GradleException("Cant find Android extension")
         }
     }
 
