@@ -1,8 +1,14 @@
 package ru.solodovnikov.roboversioning
 
+import groovy.transform.Immutable
+
 class Git {
     private final GitExecutor executor
 
+    /**
+     * Git wrap
+     * @param executor
+     */
     Git(GitExecutor executor = new GitExecutorImpl()) {
         this.executor = executor
     }
@@ -26,41 +32,14 @@ class Git {
         .flatten() as List<Tag>
     }
 
+    @Immutable
+    /**
+     * Git tag
+     */
     static class Tag {
         String name
         long date
         String hash
-
-        boolean equals(o) {
-            if (this.is(o)) return true
-            if (getClass() != o.class) return false
-
-            Tag tag = (Tag) o
-
-            if (date != tag.date) return false
-            if (hash != tag.hash) return false
-            if (name != tag.name) return false
-
-            return true
-        }
-
-        int hashCode() {
-            int result
-            result = (name != null ? name.hashCode() : 0)
-            result = 31 * result + (int) (date ^ (date >>> 32))
-            result = 31 * result + (hash != null ? hash.hashCode() : 0)
-            return result
-        }
-
-
-        @Override
-        public String toString() {
-            return "Tag{" +
-                    "name='" + name + '\'' +
-                    ", date=" + date +
-                    ", hash='" + hash + '\'' +
-                    '}'
-        }
     }
 }
 

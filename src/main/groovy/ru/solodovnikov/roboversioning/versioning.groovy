@@ -1,10 +1,13 @@
 package ru.solodovnikov.roboversioning
 
+import groovy.transform.Immutable
+
 import java.util.regex.Pattern
 
 /**
  * Calculated VersionName and VersionCode for Android application
  */
+@Immutable
 class RoboVersion {
     /**
      * VersionCode
@@ -14,34 +17,6 @@ class RoboVersion {
      * VersionName
      */
     String name
-
-    boolean equals(o) {
-        if (this.is(o)) return true
-        if (getClass() != o.class) return false
-
-        RoboVersion that = (RoboVersion) o
-
-        if (code != that.code) return false
-        if (name != that.name) return false
-
-        return true
-    }
-
-    int hashCode() {
-        int result
-        result = code
-        result = 31 * result + (name != null ? name.hashCode() : 0)
-        return result
-    }
-
-
-    @Override
-    String toString() {
-        return "RoboVersion{" +
-                "code=" + code +
-                ", name='" + name + '\'' +
-                '}'
-    }
 }
 
 /**
@@ -152,7 +127,7 @@ class ReleaseCandidateDigitVersioning extends BaseDigitVersioning {
     @Override
     protected RoboVersion calculateFromParts(Git.Tag tag, Integer[] parsedDigits) {
         def (major, minor, patch, rc) = parsedDigits[0..<parsedDigits.length]
-        return [code: ((major * 100 + minor) * 100 + patch)*100+rc, name: tag.name] as RoboVersion
+        return [code: ((major * 100 + minor) * 100 + patch) * 100 + rc, name: tag.name] as RoboVersion
     }
 
     @Override
