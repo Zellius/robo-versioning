@@ -1,0 +1,9 @@
+package ru.solodovnikov.roboversioning
+
+class GitExtension {
+
+}
+
+class FlavorExtension {
+    Versioning versioning
+}

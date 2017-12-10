@@ -27,9 +27,40 @@ class Git {
     }
 
     static class Tag {
-        final String name
-        final long date
-        final String hash
+        String name
+        long date
+        String hash
+
+        boolean equals(o) {
+            if (this.is(o)) return true
+            if (getClass() != o.class) return false
+
+            Tag tag = (Tag) o
+
+            if (date != tag.date) return false
+            if (hash != tag.hash) return false
+            if (name != tag.name) return false
+
+            return true
+        }
+
+        int hashCode() {
+            int result
+            result = (name != null ? name.hashCode() : 0)
+            result = 31 * result + (int) (date ^ (date >>> 32))
+            result = 31 * result + (hash != null ? hash.hashCode() : 0)
+            return result
+        }
+
+
+        @Override
+        public String toString() {
+            return "Tag{" +
+                    "name='" + name + '\'' +
+                    ", date=" + date +
+                    ", hash='" + hash + '\'' +
+                    '}'
+        }
     }
 }
 

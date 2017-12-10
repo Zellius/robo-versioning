@@ -20,10 +20,13 @@ apply plugin: 'groovy'
 apply from: './gradle/publish.gradle'
 
 sourceSets.main.groovy.srcDirs = ["src/main/groovy"]
+sourceSets.test.groovy.srcDirs = ["src/test/groovy"]
 
 dependencies {
     compileOnly "com.android.tools.build:gradle:3.0.1"
     compileOnly gradleApi()
 
     implementation localGroovy()
+
+    testImplementation 'junit:junit:4.12'
 }

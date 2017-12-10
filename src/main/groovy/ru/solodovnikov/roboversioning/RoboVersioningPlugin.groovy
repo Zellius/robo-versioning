@@ -13,6 +13,8 @@ import org.gradle.api.Project
 class RoboVersioningPlugin implements Plugin<Project> {
     private static final String ANDROID_EXTENSION_NAME = 'android'
 
+    private static final int MAX_VERSION_CODE = 2_100_000_000
+
     private Project project
 
     @Override
@@ -24,7 +26,7 @@ class RoboVersioningPlugin implements Plugin<Project> {
             throw new GradleException('Please apply com.android.application or com.android.library plugin before apply this plugin!')
         }
 
-        def ext = project.extensions.create('gitSettings', RoboVersioningGitExtension)
+        def ext = project.extensions.create('gitSettings', GitExtension)
 
         project.afterEvaluate {
             getAndroidVariants().all {
