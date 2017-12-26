@@ -53,11 +53,17 @@ interface GitExecutor {
 }
 
 class GitExecutorImpl implements GitExecutor {
+    private final String gitPath
+
+    GitExecutorImpl(String gitPath = 'git') {
+        this.gitPath = gitPath
+    }
+
     @Override
     Process execute(String command) {
         if (!command) {
             throw new IllegalArgumentException("Git command cannot be null or empty")
         }
-        "git $command".execute()
+        "$gitPath $command".execute()
     }
 }
