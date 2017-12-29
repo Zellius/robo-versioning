@@ -32,10 +32,10 @@ class Git {
         .flatten() as List<Tag>
     }
 
-    @Immutable
     /**
      * Git tag
      */
+    @Immutable
     static class Tag {
         String name
         long date

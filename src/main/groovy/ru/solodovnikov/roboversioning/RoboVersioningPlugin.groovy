@@ -11,15 +11,21 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import ru.solodovnikov.roboversioning.ext.FlavorExtension
 import ru.solodovnikov.roboversioning.ext.GlobalExtension
-import sun.security.krb5.internal.ccache.Tag
 
 class RoboVersioningPlugin implements Plugin<Project> {
+    private static final String TAG = 'RoboVersioning'
+
     private static final String ANDROID_EXTENSION_NAME = 'android'
 
     static final String FLAVOR_EXTENSION_NAME = 'roboFlavor'
     static final String GLOBAL_EXTENSION_NAME = 'roboGlobal'
 
-
+    /**
+     * Warning: The greatest value Google Play allows for versionCode is 2100000000
+     *
+     * https://developer.android.com/studio/publish/versioning.html
+     *
+     */
     private static final int MAX_VERSION_CODE = 2_100_000_000
 
     private Project project
@@ -32,6 +38,7 @@ class RoboVersioningPlugin implements Plugin<Project> {
         if (!isAndroidProject()) {
             throw new GradleException('Please apply com.android.application or com.android.library plugin before apply this plugin!')
         }
+
         final GlobalExtension globalExtension = getAndroidExt().extensions.create(GLOBAL_EXTENSION_NAME, GlobalExtension, project)
 
         prepareSetupExtension()
@@ -39,50 +46,57 @@ class RoboVersioningPlugin implements Plugin<Project> {
         project.afterEvaluate {
             final Git git = new Git(new GitExecutorImpl(globalExtension.git?.path ?: 'git'))
 
-            List<Tag> gitTags
+            List<Git.Tag> gitTags
 
             getAndroidVariants().all { variant ->
-                final Versioning defaultVersioning = getAndroidExt().defaultConfig[FLAVOR_EXTENSION_NAME].versioning
-                final Versioning buildTypeVersioning = variant.buildType[FLAVOR_EXTENSION_NAME].versioning
-                final Versioning flavorVersioning = variant.productFlavors[FLAVOR_EXTENSION_NAME]*.versioning[0]
+                def resultVersioning = ((variant.productFlavors[FLAVOR_EXTENSION_NAME]*.versioning +
+                        [variant.buildType[FLAVOR_EXTENSION_NAME].versioning,
+                         getAndroidExt().defaultConfig[FLAVOR_EXTENSION_NAME].versioning]) as List<Versioning>)
+                        .find { it }
 
-                final Versioning resultVersioning = flavorVersioning ?: buildTypeVersioning ?: defaultVersioning
+                println("$TAG: <${variant.name}> versioning type ${resultVersioning?.class?.simpleName ?: 'null'}")
 
                 if (resultVersioning != null) {
                     if (gitTags == null) {
                         gitTags = git.tags()
-                        println("Tags: ${gitTags.name}")
+                        println("$TAG: tags ${gitTags?.name ?: 'empty'}")
                     }
-                    if (!gitTags?.empty ?: true) {
-                        for (tag in gitTags) {
-                            if (resultVersioning.isTagValid(tag)) {
-                                println("Valid tag for ${variant.name} build variant is ${tag.name}")
 
-                                final def version = resultVersioning.calculate(tag)
+                    final def version = (gitTags?.find {
+                        resultVersioning.isTagValid(it)
+                    } ?: null).with {
+                        final RoboVersion calculatedVersion
+                        if (!it) {
+                            println("$TAG: <${variant.name}> there is no valid tag for build variant")
+                            calculatedVersion = resultVersioning.empty()
+                        } else {
+                            println("$TAG: <${variant.name}> Valid tag is ${it.name}")
+                            calculatedVersion = resultVersioning.calculate(it)
+                        }
+                        println("$TAG: <${variant.name}> tag calculated version $calculatedVersion")
+                        if (calculatedVersion.code > MAX_VERSION_CODE) {
+                            throw new IllegalStateException("Calculated versionCode ${it.code} is too big for Google Play")
+                        }
+                        return calculatedVersion
+                    }
 
-                                //put version on BuildConfig
-                                def buildConfigVersioningTask = project.tasks.create("${variant.name.toUpperCase()}BuildConfigRoboVersioning", {
-                                    it.doLast {
-                                        variant.mergedFlavor.with {
-                                            it.versionName = version.name
-                                            it.versionCode = version.code
+                    //put version on BuildConfig
+                    variant.preBuild.dependsOn.add(project.tasks.create("RoboVersioning${variant.name.toUpperCase()}BuildConfig", {
+                        it.doLast {
+                            variant.mergedFlavor.with {
+                                it.versionName = version.name
+                                it.versionCode = version.code
 
-                                        }
-                                    }
-                                })
+                            }
+                        }
+                    }))
 
-                                variant.preBuild.dependsOn.add(buildConfigVersioningTask)
-
-                                //put versioning to the manifest
-                                variant.outputs.all {
-                                    if (it.metaClass.respondsTo(it, "getApkData")) {
-                                        it.apkData.with {
-                                            it.versionCode = version.code
-                                            it.versionName = version.name
-                                        }
-                                    }
-                                }
-                                break
+                    //put versioning to the manifest
+                    variant.outputs.all {
+                        if (it.metaClass.respondsTo(it, "getApkData")) {
+                            it.apkData.with {
+                                it.versionCode = version.code
+                                it.versionName = version.name
                             }
                         }
                     }
