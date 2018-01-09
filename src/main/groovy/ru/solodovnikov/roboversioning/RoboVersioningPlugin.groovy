@@ -9,8 +9,6 @@ import org.gradle.api.DomainObjectSet
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import ru.solodovnikov.roboversioning.ext.FlavorExtension
-import ru.solodovnikov.roboversioning.ext.GlobalExtension
 
 class RoboVersioningPlugin implements Plugin<Project> {
     private static final String TAG = 'RoboVersioning'
@@ -20,6 +18,8 @@ class RoboVersioningPlugin implements Plugin<Project> {
     static final String FLAVOR_EXTENSION_NAME = 'roboFlavor'
     static final String GLOBAL_EXTENSION_NAME = 'roboGlobal'
 
+    private Project project
+
     /**
      * Warning: The greatest value Google Play allows for versionCode is 2100000000
      *
@@ -27,8 +27,6 @@ class RoboVersioningPlugin implements Plugin<Project> {
      *
      */
     private static final int MAX_VERSION_CODE = 2_100_000_000
-
-    private Project project
 
     @Override
     void apply(Project project) {
@@ -39,46 +37,25 @@ class RoboVersioningPlugin implements Plugin<Project> {
             throw new GradleException('Please apply com.android.application or com.android.library plugin before apply this plugin!')
         }
 
-        final GlobalExtension globalExtension = getAndroidExt().extensions.create(GLOBAL_EXTENSION_NAME, GlobalExtension, project)
+        final GlobalExtension globalExtension = project.extensions.create(GLOBAL_EXTENSION_NAME, GlobalExtension, project)
 
-        prepareSetupExtension()
+        prepareFlavorExtension()
 
         project.afterEvaluate {
-            final Git git = new Git(new GitExecutorImpl(globalExtension.git?.path ?: 'git'))
-
-            List<Git.Tag> gitTags
+            final Git git = new GitImpl(new GitExecutorImpl(globalExtension.git?.path ?: 'git'))
 
             getAndroidVariants().all { variant ->
-                def resultVersioning = ((variant.productFlavors[FLAVOR_EXTENSION_NAME]*.versioning +
-                        [variant.buildType[FLAVOR_EXTENSION_NAME].versioning,
-                         getAndroidExt().defaultConfig[FLAVOR_EXTENSION_NAME].versioning]) as List<Versioning>)
+                def resultVersioning = ((variant.productFlavors[FLAVOR_EXTENSION_NAME]*.versioningCalculator +
+                        [variant.buildType[FLAVOR_EXTENSION_NAME].versioningCalculator,
+                         getAndroidExt().defaultConfig[FLAVOR_EXTENSION_NAME].versioningCalculator]) as List<VersioningCalculator>)
                         .find { it }
 
                 println("$TAG: <${variant.name}> versioning type ${resultVersioning?.class?.simpleName ?: 'null'}")
 
                 if (resultVersioning != null) {
-                    if (gitTags == null) {
-                        gitTags = git.tags()
-                        println("$TAG: tags ${gitTags?.name ?: 'empty'}")
-                    }
+                    final def version = resultVersioning.calculate()
 
-                    final def version = (gitTags?.find {
-                        resultVersioning.isTagValid(it)
-                    } ?: null).with {
-                        final RoboVersion calculatedVersion
-                        if (!it) {
-                            println("$TAG: <${variant.name}> there is no valid tag for build variant")
-                            calculatedVersion = resultVersioning.empty()
-                        } else {
-                            println("$TAG: <${variant.name}> Valid tag is ${it.name}")
-                            calculatedVersion = resultVersioning.calculate(it)
-                        }
-                        println("$TAG: <${variant.name}> tag calculated version $calculatedVersion")
-                        if (calculatedVersion.code > MAX_VERSION_CODE) {
-                            throw new IllegalStateException("Calculated versionCode ${it.code} is too big for Google Play")
-                        }
-                        return calculatedVersion
-                    }
+                    checkVersion(version)
 
                     //put version on BuildConfig
                     variant.preBuild.dependsOn.add(project.tasks.create("RoboVersioning${variant.name.toUpperCase()}BuildConfig", {
@@ -86,7 +63,6 @@ class RoboVersioningPlugin implements Plugin<Project> {
                             variant.mergedFlavor.with {
                                 it.versionName = version.name
                                 it.versionCode = version.code
-
                             }
                         }
                     }))
@@ -105,10 +81,20 @@ class RoboVersioningPlugin implements Plugin<Project> {
         }
     }
 
+
+    private void checkVersion(RoboVersion version) {
+        if (!version) {
+            throw new IllegalStateException("Calculated version is null")
+        }
+        if (calculatedVersion.code > MAX_VERSION_CODE) {
+            throw new IllegalStateException("Calculated versionCode ${version.code} is too big for Google Play")
+        }
+    }
+
     /**
-     * Prepare setup extension for all current and future flavors
+     * Prepare flavor extension for all current and future flavors
      */
-    private void prepareSetupExtension() {
+    private void prepareFlavorExtension() {
         def android = getAndroidExt()
 
         //add extensions to default flavor

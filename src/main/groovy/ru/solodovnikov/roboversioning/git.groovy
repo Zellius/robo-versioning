@@ -2,35 +2,14 @@ package ru.solodovnikov.roboversioning
 
 import groovy.transform.Immutable
 
-class Git {
-    private final GitExecutor executor
-
-    /**
-     * Git wrap
-     * @param executor
-     */
-    Git(GitExecutor executor = new GitExecutorImpl()) {
-        this.executor = executor
-    }
-
+interface Git {
     /**
      * Get all git tags
      * @return list of all tags
      */
-    List<Tag> tags() {
-        def command = "log --simplify-by-decoration --pretty=format:\"%H|%ct|%d\" --first-parent"
-        def regex = /(.*?)\|(.*?)\|.*?(tag: [^)\n]+)/
-        (executor.execute(command).getText() =~ regex).collect
-        {
-            def (hash, time, tags) = it[1..it.size() - 1]
+    List<Tag> tags()
 
-            (tags =~ /tag: ([^\n,]+)/)
-                    .collect { it[1] }
-                    .flatten()
-                    .collect { [name: it, date: time.toLong(), hash: hash] as Tag }
-        }
-        .flatten() as List<Tag>
-    }
+    String describe(String params)
 
     /**
      * Git tag
@@ -40,6 +19,44 @@ class Git {
         String name
         long date
         String hash
+    }
+}
+
+class GitImpl implements Git {
+    private final GitExecutor executor
+
+    /**
+     * Git wrap
+     * @param executor
+     */
+    GitImpl(GitExecutor executor = new GitExecutorImpl()) {
+        this.executor = executor
+    }
+
+    /**
+     * Get all git tags
+     * @return list of all tags
+     */
+    @Override
+    List<Git.Tag> tags() {
+        def command = "log --simplify-by-decoration --pretty=format:\"%H|%ct|%d\" --first-parent"
+        def regex = /(.*?)\|(.*?)\|.*?(tag: [^)\n]+)/
+        (executor.execute(command).getText() =~ regex).collect
+        {
+            def (hash, time, tags) = it[1..it.size() - 1]
+
+            (tags =~ /tag: ([^\n,]+)/)
+                    .collect { it[1] }
+                    .flatten()
+                    .collect { [name: it, date: time.toLong(), hash: hash] as Git.Tag }
+        }
+        .flatten() as List<Git.Tag>
+    }
+
+    @Override
+    String describe(String params = null) {
+        def command = "describe --tags ${params ?: ""}"
+        return executor.execute(command).getText()
     }
 }
 

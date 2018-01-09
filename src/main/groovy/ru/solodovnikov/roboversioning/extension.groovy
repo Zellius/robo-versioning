@@ -1,7 +1,8 @@
-package ru.solodovnikov.roboversioning.ext
+package ru.solodovnikov.roboversioning
 
 import org.gradle.api.Project
-import ru.solodovnikov.roboversioning.Versioning
+import ru.solodovnikov.roboversioning.TagVersioning
+import ru.solodovnikov.roboversioning.VersioningCalculator
 
 class GlobalExtension {
     private final Project project
@@ -29,5 +30,5 @@ class GlobalExtension {
 }
 
 class FlavorExtension {
-    Versioning versioning
+    VersioningCalculator versioningCalculator
 }
