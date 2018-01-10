@@ -1,5 +1,3 @@
-import ru.solodovnikov.roboversioning.*
-
 apply plugin: 'com.android.application'
 apply plugin: 'com.github.zellius.robo-versioning'
 
@@ -31,7 +29,9 @@ android {
         flavor1 {
             dimension "dim1"
             roboVersioningFlavor {
-                versioningCalculator new GitTagVersioningCalculator(new ReleaseDigitTagVersioning())
+                versioningCalculator {
+                    ["name": "test", "code": 123]
+                }
             }
 
         }

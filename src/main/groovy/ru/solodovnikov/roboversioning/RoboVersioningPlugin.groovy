@@ -11,8 +11,6 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 class RoboVersioningPlugin implements Plugin<Project> {
-    private static final String TAG = 'RoboVersioning'
-
     private static final String ANDROID_EXTENSION_NAME = 'android'
 
     static final String PROJECT_EXTENSION_NAME = 'roboVersioningFlavor'
@@ -50,15 +48,17 @@ class RoboVersioningPlugin implements Plugin<Project> {
                          getAndroidExt().defaultConfig[PROJECT_EXTENSION_NAME].versioningCalculator]) as List<VersionCalculator>)
                         .find { it }
 
-                println("$TAG: <${variant.name}> versioning type ${resultVersioning?.class?.simpleName ?: 'null'}")
+                logger.log("<${variant.name}> versioning type ${resultVersioning?.class?.typeName ?: 'null'}")
 
                 if (resultVersioning != null) {
                     final def version = resultVersioning.calculate(git)
 
                     checkVersion(version)
 
+                    logger.log("<${variant.name}> versionCode ${version.code}, versionName ${version.name}")
+
                     //put version on BuildConfig
-                    variant.preBuild.dependsOn.add(project.tasks.create("RoboVersioning${variant.name.toUpperCase()}BuildConfig", {
+                    variant.preBuild.dependsOn.add(project.tasks.create("RoboVersioning${variant.name}BuildConfig", {
                         it.doLast {
                             variant.mergedFlavor.with {
                                 it.versionName = version.name
@@ -67,7 +67,7 @@ class RoboVersioningPlugin implements Plugin<Project> {
                         }
                     }))
 
-                    //put versioning to the manifest
+                    //put versioning to the manifest (bad implementation...)
                     variant.outputs.all {
                         if (it.metaClass.respondsTo(it, "getApkData")) {
                             it.apkData.with {

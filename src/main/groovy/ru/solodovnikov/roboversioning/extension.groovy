@@ -47,6 +47,35 @@ class ProjectExtension {
     }
 }
 
+
 class FlavorExtension {
+    static final String TAG_DIGIT = 'tag_digit'
+    static final String TAG_DIGIT_RC = 'tag_digit_rc'
+    static final String TAG_DESCRIBE_DIGIT = 'tag_describe_digit'
+    static final String TAG_DESCRIBE_DIGIT_RC = 'tag_describe_digit_rc'
+
     VersionCalculator versioningCalculator
+
+    void setVersioningCalculator(String versionCalculatorType) {
+        switch (versionCalculatorType) {
+            case TAG_DIGIT:
+                this.versioningCalculator = new GitTagVersioningCalculator(new ReleaseDigitTagVersioning())
+                break
+            case TAG_DIGIT_RC:
+                this.versioningCalculator = new GitTagVersioningCalculator(new ReleaseCandidateDigitTagVersioning())
+                break
+            case TAG_DESCRIBE_DIGIT:
+                this.versioningCalculator = new GitTagDescribeVersionCalculator(new ReleaseCandidateDigitTagVersioning())
+                break
+            case TAG_DESCRIBE_DIGIT_RC:
+                this.versioningCalculator = new GitTagDescribeVersionCalculator(new ReleaseCandidateDigitTagVersioning())
+                break
+            default:
+                throw new IllegalArgumentException("Unknown versionCalculatorType $versionCalculatorType")
+        }
+    }
+
+    void setVersioningCalculator(Closure<Map<String, Object>> closure) {
+        this.versioningCalculator = { git -> new RoboVersion(closure.call(git)) }
+    }
 }

@@ -75,6 +75,8 @@ class GitImpl implements Git {
 
     @Override
     Process execute(String command) {
+        logger.log("git command executed: $command")
+
         if (!command) {
             throw new IllegalArgumentException("Git command cannot be null or empty")
         }

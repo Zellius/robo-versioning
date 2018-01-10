@@ -74,28 +74,9 @@ interface TagVersioning {
 }
 
 /**
- * Base git version calculator
- */
-abstract class BaseGitVersionCalculator implements VersionCalculator {
-    private final String tag
-
-    BaseGitVersionCalculator() {
-        this.tag = getClass().simpleName
-    }
-
-    /**
-     * Log event
-     * @param message log message
-     */
-    protected void log(String message) {
-        println("$tag: $message")
-    }
-}
-
-/**
  * Default git tag versioning calculator
  */
-class GitTagVersioningCalculator extends BaseGitVersionCalculator {
+class GitTagVersioningCalculator implements VersionCalculator {
     protected final TagVersioning versioning
 
     /**
@@ -111,20 +92,20 @@ class GitTagVersioningCalculator extends BaseGitVersionCalculator {
     RoboVersion calculate(Git git) {
         final List<Git.Tag> tags = git.tags()
 
-        log("tags ${tags?.name ?: 'empty'}")
+        logger.log("tags ${tags?.name ?: 'empty'}")
 
         return (tags?.find { versioning.isTagValid(it) } ?: null).with { Git.Tag tag ->
             final RoboVersion calculatedVersion
 
             if (!tag) {
-                log("there is no valid tag for build variant")
+                logger.log("there is no valid tag for build variant")
                 calculatedVersion = versioning.empty()
             } else {
-                log("valid tag is ${tag.name}")
+                logger.log("valid tag is ${tag.name}")
                 calculatedVersion = calculate(tag)
             }
 
-            log("tag calculated version $calculatedVersion")
+            logger.log("tag calculated version $calculatedVersion")
 
             return calculatedVersion
         }
@@ -193,10 +174,7 @@ abstract class BaseDigitTagVersioning implements TagVersioning {
 
     @Override
     boolean isTagValid(Git.Tag tag) {
-        if (tag == null) {
-            return false
-        }
-        if (!tag.name || !tag.date || !tag.hash) {
+        if (!tag || !tag.name || !tag.date || !tag.hash) {
             return false
         }
 
