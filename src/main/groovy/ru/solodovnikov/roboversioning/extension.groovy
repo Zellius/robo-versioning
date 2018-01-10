@@ -1,23 +1,33 @@
 package ru.solodovnikov.roboversioning
 
 import org.gradle.api.Project
-import ru.solodovnikov.roboversioning.TagVersioning
-import ru.solodovnikov.roboversioning.VersioningCalculator
 
-class GlobalExtension {
+class ProjectExtension {
     private final Project project
 
-    File git
+    String git = 'git'
+    /**
+     * params for get git tags command
+     */
+    String tagsParams = '--first-parent'
+    /**
+     * params for describe git command
+     */
+    String describeParams = '--first-parent'
+    /**
+     * Custom git implementation
+     */
+    Git gitImplementation
 
-    GlobalExtension(Project project) {
+    ProjectExtension(Project project) {
         this.project = project
     }
 
-    void git(String path) {
+    void gitPath(String path) {
         setGit(project.file(path))
     }
 
-    void git(File git) {
+    void gitPath(File git) {
         setGit(git)
     }
 
@@ -25,10 +35,18 @@ class GlobalExtension {
         if (!git.isFile()) {
             throw new IllegalArgumentException("$git is not a file")
         }
-        this.git = git
+        this.git = git.absolutePath
+    }
+
+    Git getGitImplementation() {
+        if (gitImplementation != null) {
+            return gitImplementation
+        } else {
+            return new GitImpl(git, tagsParams, describeParams)
+        }
     }
 }
 
 class FlavorExtension {
-    VersioningCalculator versioningCalculator
+    VersionCalculator versioningCalculator
 }

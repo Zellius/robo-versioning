@@ -15,8 +15,8 @@ class RoboVersioningPlugin implements Plugin<Project> {
 
     private static final String ANDROID_EXTENSION_NAME = 'android'
 
-    static final String FLAVOR_EXTENSION_NAME = 'roboFlavor'
-    static final String GLOBAL_EXTENSION_NAME = 'roboGlobal'
+    static final String PROJECT_EXTENSION_NAME = 'roboVersioningFlavor'
+    static final String GLOBAL_EXTENSION_NAME = 'roboVersioning'
 
     private Project project
 
@@ -37,23 +37,23 @@ class RoboVersioningPlugin implements Plugin<Project> {
             throw new GradleException('Please apply com.android.application or com.android.library plugin before apply this plugin!')
         }
 
-        final GlobalExtension globalExtension = project.extensions.create(GLOBAL_EXTENSION_NAME, GlobalExtension, project)
+        final ProjectExtension globalExtension = project.extensions.create(GLOBAL_EXTENSION_NAME, ProjectExtension, project)
 
         prepareFlavorExtension()
 
         project.afterEvaluate {
-            final Git git = new GitImpl(new GitExecutorImpl(globalExtension.git?.path ?: 'git'))
+            final Git git = globalExtension.gitImplementation
 
             getAndroidVariants().all { variant ->
-                def resultVersioning = ((variant.productFlavors[FLAVOR_EXTENSION_NAME]*.versioningCalculator +
-                        [variant.buildType[FLAVOR_EXTENSION_NAME].versioningCalculator,
-                         getAndroidExt().defaultConfig[FLAVOR_EXTENSION_NAME].versioningCalculator]) as List<VersioningCalculator>)
+                final VersionCalculator resultVersioning = ((variant.productFlavors[PROJECT_EXTENSION_NAME]*.versioningCalculator +
+                        [variant.buildType[PROJECT_EXTENSION_NAME].versioningCalculator,
+                         getAndroidExt().defaultConfig[PROJECT_EXTENSION_NAME].versioningCalculator]) as List<VersionCalculator>)
                         .find { it }
 
                 println("$TAG: <${variant.name}> versioning type ${resultVersioning?.class?.simpleName ?: 'null'}")
 
                 if (resultVersioning != null) {
-                    final def version = resultVersioning.calculate()
+                    final def version = resultVersioning.calculate(git)
 
                     checkVersion(version)
 
@@ -86,7 +86,7 @@ class RoboVersioningPlugin implements Plugin<Project> {
         if (!version) {
             throw new IllegalStateException("Calculated version is null")
         }
-        if (calculatedVersion.code > MAX_VERSION_CODE) {
+        if (version.code > MAX_VERSION_CODE) {
             throw new IllegalStateException("Calculated versionCode ${version.code} is too big for Google Play")
         }
     }
@@ -114,8 +114,8 @@ class RoboVersioningPlugin implements Plugin<Project> {
     }
 
     private void registerFlavorExtension(flavor) {
-        if (!flavor.extensions.findByName(FLAVOR_EXTENSION_NAME)) {
-            flavor.extensions.create(FLAVOR_EXTENSION_NAME, FlavorExtension)
+        if (!flavor.extensions.findByName(PROJECT_EXTENSION_NAME)) {
+            flavor.extensions.create(PROJECT_EXTENSION_NAME, FlavorExtension)
         }
     }
 

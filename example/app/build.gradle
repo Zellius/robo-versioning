@@ -1,4 +1,4 @@
-import ru.solodovnikov.roboversioning.ReleaseDigitVersioning
+import ru.solodovnikov.roboversioning.*
 
 apply plugin: 'com.android.application'
 apply plugin: 'com.github.zellius.robo-versioning'
@@ -10,32 +10,28 @@ android {
         minSdkVersion 14
         targetSdkVersion 26
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-        roboFlavor {
-        }
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
-        debug{
+        debug {
 
         }
     }
 
     flavorDimensions 'dim1'
-    roboGlobal {
-    }
 
     productFlavors {
         flavor2 {
             dimension "dim1"
-           
+
         }
         flavor1 {
             dimension "dim1"
-            roboFlavor{
-                versioning new ReleaseDigitVersioning()
+            roboVersioningFlavor {
+                versioningCalculator new GitTagVersioningCalculator(new ReleaseDigitTagVersioning())
             }
 
         }

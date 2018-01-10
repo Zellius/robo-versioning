@@ -1,6 +1,7 @@
 package ru.solodovnikov.roboversioning
 
 import groovy.transform.EqualsAndHashCode
+import groovy.transform.Immutable
 
 import java.util.regex.Pattern
 
@@ -8,23 +9,27 @@ import java.util.regex.Pattern
  * Calculated VersionName and VersionCode for Android application
  */
 @EqualsAndHashCode
+@Immutable
 class RoboVersion {
     /**
      * VersionName
      */
-    final int code
+    int code
     /**
      * VersionCode
      */
-    final String name
-
-    RoboVersion(int code, String name) {
-        this.code = code
-        this.name = name
-    }
+    String name
 }
 
-interface VersioningCalculator {
+/**
+ * Base interface for version calculators
+ */
+interface VersionCalculator {
+    /**
+     * Calculate current android version
+     * @param git configured git implementation
+     * @return calculated android version
+     */
     RoboVersion calculate(Git git)
 }
 
@@ -68,44 +73,58 @@ interface TagVersioning {
     RoboVersion empty()
 }
 
-abstract class BaseGitVersioningCalculator implements VersioningCalculator {
-    protected final String logTag
-    protected final Git git
+/**
+ * Base git version calculator
+ */
+abstract class BaseGitVersionCalculator implements VersionCalculator {
+    private final String tag
 
-    BaseGitVersioningCalculator(Git git) {
-        this.git = git
-        this.logTag = getClass().simpleName
+    BaseGitVersionCalculator() {
+        this.tag = getClass().simpleName
+    }
+
+    /**
+     * Log event
+     * @param message log message
+     */
+    protected void log(String message) {
+        println("$tag: $message")
     }
 }
 
-class GitTagVersioningCalculator extends BaseGitVersioningCalculator {
+/**
+ * Default git tag versioning calculator
+ */
+class GitTagVersioningCalculator extends BaseGitVersionCalculator {
     protected final TagVersioning versioning
 
-    GitTagVersioningCalculator(Git git = new GitImpl(), TagVersioning versioning) {
-        super(git)
+    /**
+     *
+     * @param versioning versioning used for this calculator
+     */
+    GitTagVersioningCalculator(TagVersioning versioning) {
+        super()
         this.versioning = versioning
     }
 
     @Override
-    RoboVersion calculate() {
-        def tags = git.tags()
+    RoboVersion calculate(Git git) {
+        final List<Git.Tag> tags = git.tags()
 
-        println("$logTag: tags ${tags?.name ?: 'empty'}")
+        log("tags ${tags?.name ?: 'empty'}")
 
-        return (gitTags?.find { resultVersioning.isTagValid(it) } ?: null).with {
+        return (tags?.find { versioning.isTagValid(it) } ?: null).with { Git.Tag tag ->
             final RoboVersion calculatedVersion
 
-            if (!it) {
-                println("$logTag: there is no valid tag for build variant")
+            if (!tag) {
+                log("there is no valid tag for build variant")
                 calculatedVersion = versioning.empty()
             } else {
-                println("$logTag: valid tag is ${it.name}")
-                calculatedVersion = calculate(it)
+                log("valid tag is ${tag.name}")
+                calculatedVersion = calculate(tag)
             }
 
-            println("$logTag: tag calculated version $calculatedVersion")
-
-            check(calculatedVersion)
+            log("tag calculated version $calculatedVersion")
 
             return calculatedVersion
         }
@@ -116,13 +135,12 @@ class GitTagVersioningCalculator extends BaseGitVersioningCalculator {
     }
 }
 
-class GitTagDescribeVersioningCalculator extends GitTagVersioningCalculator {
-    GitTagDescribeVersioningCalculator(TagVersioning versioning) {
+/**
+ * Version calculator which use git describe as version name
+ */
+class GitTagDescribeVersionCalculator extends GitTagVersioningCalculator {
+    GitTagDescribeVersionCalculator(TagVersioning versioning) {
         super(versioning)
-    }
-
-    GitTagDescribeVersioningCalculator(Git git, TagVersioning versioning) {
-        super(git, versioning)
     }
 
     @Override

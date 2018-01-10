@@ -1,20 +1,33 @@
 package ru.solodovnikov.roboversioning
 
+import groovy.transform.EqualsAndHashCode
 import groovy.transform.Immutable
 
 interface Git {
     /**
-     * Get all git tags
-     * @return list of all tags
+     * Get git tags
+     * @return list of git tags
      */
     List<Tag> tags()
 
-    String describe(String params)
+    /**
+     * Git describe
+     * @return
+     */
+    String describe(String hash)
+
+    /**
+     * Execute git command
+     * @param command git command
+     * @return
+     */
+    Process execute(String command)
 
     /**
      * Git tag
      */
     @Immutable
+    @EqualsAndHashCode
     static class Tag {
         String name
         long date
@@ -22,58 +35,42 @@ interface Git {
     }
 }
 
+/**
+ * Default git implementation
+ */
 class GitImpl implements Git {
-    private final GitExecutor executor
+    private final String git
+    private final String tagsCommandParams
+    private final String describeCommandParams
 
-    /**
-     * Git wrap
-     * @param executor
-     */
-    GitImpl(GitExecutor executor = new GitExecutorImpl()) {
-        this.executor = executor
+    GitImpl(String git,
+            String tagsCommandParams,
+            String describeCommandParams) {
+        this.git = git
+        this.tagsCommandParams = tagsCommandParams
+        this.describeCommandParams = describeCommandParams
     }
 
-    /**
-     * Get all git tags
-     * @return list of all tags
-     */
     @Override
     List<Git.Tag> tags() {
-        def command = "log --simplify-by-decoration --pretty=format:\"%H|%ct|%d\" --first-parent"
+        def command = "log --simplify-by-decoration --pretty=format:\"%H|%ct|%d\" ${tagsCommandParams ?: ''}"
         def regex = /(.*?)\|(.*?)\|.*?(tag: [^)\n]+)/
-        (executor.execute(command).getText() =~ regex).collect
+        (execute(command).getText() =~ regex).collect
         {
             def (hash, time, tags) = it[1..it.size() - 1]
 
             (tags =~ /tag: ([^\n,]+)/)
                     .collect { it[1] }
                     .flatten()
-                    .collect { [name: it, date: time.toLong(), hash: hash] as Git.Tag }
+                    .collect { new Git.Tag(it, time.toLong(), hash) }
         }
         .flatten() as List<Git.Tag>
     }
 
     @Override
-    String describe(String params = null) {
-        def command = "describe --tags ${params ?: ""}"
-        return executor.execute(command).getText()
-    }
-}
-
-interface GitExecutor {
-    /**
-     * Execute Git command
-     * @param command git command. Cannot be null.
-     * @return a process for the command
-     */
-    Process execute(String command)
-}
-
-class GitExecutorImpl implements GitExecutor {
-    private final String gitPath
-
-    GitExecutorImpl(String gitPath = 'git') {
-        this.gitPath = gitPath
+    String describe(String hash) {
+        def command = "describe --tags ${describeCommandParams ?: ''} ${hash ?: ''}"
+        return execute(command).getText()
     }
 
     @Override
@@ -81,6 +78,7 @@ class GitExecutorImpl implements GitExecutor {
         if (!command) {
             throw new IllegalArgumentException("Git command cannot be null or empty")
         }
-        "$gitPath $command".execute()
+
+        return "$git $command".execute()
     }
 }
