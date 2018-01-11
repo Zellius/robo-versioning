@@ -73,8 +73,8 @@ class FlavorExtension {
         }
     }
 
-    void setVersioningCalculator(VersionCalculator versionCalculator) {
-        this.versioningCalculator = versionCalculator
+    void setVersioningCalculator(TagVersioning tagVersioning) {
+        this.versioningCalculator = new GitTagVersioningCalculator(tagVersioning, logger)
     }
 
     void setVersioningCalculator(String versionCalculatorType) {
@@ -100,12 +100,12 @@ class FlavorExtension {
         this.versioningCalculator = { git -> new RoboVersion(closure.call(git)) }
     }
 
-    VersionCalculator customTagDigit(Pattern pattern,
+    TagVersioning customTagDigit(Pattern pattern,
                                      Closure<Boolean> validClosure = null,
                                      Closure<String> nameClosure = null,
                                      Closure<Integer> codeClosure = null,
                                      Closure<Map<String, Object>> emptyClosure) {
-        return new GitTagVersioningCalculator(new BaseDigitTagVersioning(pattern) {
+        return new BaseDigitTagVersioning(pattern) {
             @Override
             RoboVersion empty() {
                 return new RoboVersion(emptyClosure.call())
@@ -143,6 +143,6 @@ class FlavorExtension {
                     return super.calculateVersionCode(parsedDigits)
                 }
             }
-        }, logger)
+        }
     }
 }
