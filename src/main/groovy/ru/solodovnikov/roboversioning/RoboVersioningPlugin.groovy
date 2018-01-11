@@ -59,7 +59,7 @@ class RoboVersioningPlugin implements Plugin<Project> {
                     logger.log("<${variant.name}> versionCode ${version.code}, versionName ${version.name}")
 
                     //put version on BuildConfig
-                    variant.preBuild.dependsOn.add(project.tasks.create("RoboVersioning${variant.name}BuildConfig", {
+                    variant.preBuild.dependsOn.add(project.tasks.create("roboVersioning${variant.name.capitalize()}BuildConfig", {
                         it.doLast {
                             variant.mergedFlavor.with {
                                 it.versionName = version.name
