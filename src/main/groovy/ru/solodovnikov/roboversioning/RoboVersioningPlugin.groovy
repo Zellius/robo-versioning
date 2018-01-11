@@ -73,7 +73,7 @@ class RoboVersioningPlugin implements Plugin<Project> {
                         if (it.metaClass.respondsTo(it, "getApkData")) {
                             it.apkData.with {
                                 it.versionCode = version.code
-                                it.versionName = version.name
+                                it.versionName = version.name + variant.mergedFlavor.versionNameSuffix
                             }
                         }
                     }

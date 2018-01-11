@@ -27,9 +27,10 @@ android {
 
         }
         flavor1 {
+            versionNameSuffix ".asd"
             dimension "dim1"
             roboVersioningFlavor {
-                versioningCalculator customTagDigit(~/(\d+).(\d+).(\d+)rc(\d+)/, {["name":"blaaa", "code":1223]})
+                versioningCalculator TAG_DIGIT
             }
 
         }
