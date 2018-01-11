@@ -1,5 +1,12 @@
 package ru.solodovnikov.roboversioning
 
-def log(String message) {
-    println("<RoboVersioning>...$message")
+interface Logger {
+    void log(message)
+}
+
+class LoggerImpl implements Logger {
+    @Override
+    void log(message) {
+        println("<RoboVersioning>...$message")
+    }
 }

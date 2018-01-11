@@ -42,13 +42,16 @@ class GitImpl implements Git {
     private final String git
     private final String tagsCommandParams
     private final String describeCommandParams
+    private final Logger logger
 
     GitImpl(String git,
             String tagsCommandParams,
-            String describeCommandParams) {
+            String describeCommandParams,
+            Logger logger) {
         this.git = git
         this.tagsCommandParams = tagsCommandParams
         this.describeCommandParams = describeCommandParams
+        this.logger = logger
     }
 
     @Override

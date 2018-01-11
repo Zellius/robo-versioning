@@ -41,6 +41,7 @@ class RoboVersioningPlugin implements Plugin<Project> {
 
         project.afterEvaluate {
             final Git git = globalExtension.gitImplementation
+            final Logger logger = globalExtension.logger
 
             getAndroidVariants().all { variant ->
                 final VersionCalculator resultVersioning = ((variant.productFlavors[PROJECT_EXTENSION_NAME]*.versioningCalculator +

@@ -78,14 +78,16 @@ interface TagVersioning {
  */
 class GitTagVersioningCalculator implements VersionCalculator {
     protected final TagVersioning versioning
+    protected final Logger logger
 
     /**
      *
      * @param versioning versioning used for this calculator
      */
-    GitTagVersioningCalculator(TagVersioning versioning) {
+    GitTagVersioningCalculator(TagVersioning versioning, Logger logger) {
         super()
         this.versioning = versioning
+        this.logger = logger
     }
 
     @Override
@@ -120,8 +122,8 @@ class GitTagVersioningCalculator implements VersionCalculator {
  * Version calculator which use git describe as version name
  */
 class GitTagDescribeVersionCalculator extends GitTagVersioningCalculator {
-    GitTagDescribeVersionCalculator(TagVersioning versioning) {
-        super(versioning)
+    GitTagDescribeVersionCalculator(TagVersioning versioning, Logger logger) {
+        super(versioning, logger)
     }
 
     @Override
@@ -146,7 +148,11 @@ abstract class BaseDigitTagVersioning implements TagVersioning {
 
     @Override
     RoboVersion calculate(Git.Tag tag) {
-        return new RoboVersion(versionCode(tag), versionName(tag))
+        if (!isTagValid(tag)) {
+            throw new IllegalArgumentException("Tag $tag is not valid")
+        }
+
+        return new RoboVersion(calculateVersionCode(calculateVersionCodeParts(tag)), calculateVersionName(tag))
     }
 
     @Override
@@ -155,7 +161,7 @@ abstract class BaseDigitTagVersioning implements TagVersioning {
             throw new IllegalArgumentException("Tag $tag is not valid")
         }
 
-        return tag.name
+        return calculateVersionName(tag)
     }
 
     @Override
@@ -164,12 +170,7 @@ abstract class BaseDigitTagVersioning implements TagVersioning {
             throw new IllegalArgumentException("Tag $tag is not valid")
         }
 
-        def digits = (tag.name =~ pattern).with {
-            return it[0][1..it.groupCount()]*.toInteger()
-                    .toArray(new Integer[it.groupCount()])
-        }
-
-        return calculateCodeFromParts(digits)
+        return calculateVersionCode(calculateVersionCodeParts(tag))
     }
 
     @Override
@@ -182,11 +183,41 @@ abstract class BaseDigitTagVersioning implements TagVersioning {
     }
 
     /**
+     * Calculate version name from tag
+     * @param tag valid git tag
+     * @return calculated version name
+     */
+    protected String calculateVersionName(Git.Tag tag) {
+        return tag.name
+    }
+
+    /**
      * Calculate version code from parsed digit parts
      * @param parsedDigits parsed digits from tag
      * @return calculated version code
      */
-    protected abstract int calculateCodeFromParts(Integer[] parsedDigits)
+    protected int calculateVersionCode(Integer[] parsedDigits) {
+        if (parsedDigits == null || parsedDigits.length == 0) {
+            throw new IllegalArgumentException("Pared digits cannot be null or empty")
+        }
+
+        return parsedDigits[1..<parsedDigits.length].inject(parsedDigits[0], { code, digit ->
+            code * 100 + digit
+        })
+    }
+
+    /**
+     * Calculate version code digit parts from git tag
+     * @param tag valid git tag
+     * @return calculated version code digit parts
+     */
+    private Integer[] calculateVersionCodeParts(Git.Tag tag) {
+        return (tag.name =~ pattern).with {
+            return it[0][1..it.groupCount()]*.toInteger()
+                    .toArray(new Integer[it.groupCount()]) as Integer[]
+        }
+    }
+
 }
 
 /**
@@ -196,12 +227,6 @@ abstract class BaseDigitTagVersioning implements TagVersioning {
 class ReleaseDigitTagVersioning extends BaseDigitTagVersioning {
     ReleaseDigitTagVersioning() {
         super(~/(\d+).(\d+).(\d+)/)
-    }
-
-    @Override
-    protected int calculateCodeFromParts(Integer[] parsedDigits) {
-        def (major, minor, patch) = parsedDigits[0..<parsedDigits.length]
-        return (major * 100 + minor) * 100 + patch
     }
 
     @Override
@@ -217,12 +242,6 @@ class ReleaseDigitTagVersioning extends BaseDigitTagVersioning {
 class ReleaseCandidateDigitTagVersioning extends BaseDigitTagVersioning {
     ReleaseCandidateDigitTagVersioning() {
         super(~/(\d+).(\d+).(\d+)rc(\d+)/)
-    }
-
-    @Override
-    protected int calculateCodeFromParts(Integer[] parsedDigits) {
-        def (major, minor, patch, rc) = parsedDigits[0..<parsedDigits.length]
-        return ((major * 100 + minor) * 100 + patch) * 100 + rc
     }
 
     @Override
