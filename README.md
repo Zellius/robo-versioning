@@ -112,6 +112,21 @@ roboVersioningFlavor {
     }
 }
 ```
+## Download
+##### rxJava1
+[ ![Download](https://api.bintray.com/packages/zellius/maven/robo-versioning/images/download.svg) ](https://bintray.com/zellius/maven/robo-versioning/_latestVersion)
+###### Maven:
+```xml
+<dependency>
+  <groupId>com.github.zellius</groupId>
+  <artifactId>robo-versioning</artifactId>
+  <version>x.y.z</version>
+</dependency>
+```
+###### Gradle:
+```gradle
+compile 'com.github.zellius:robo-versioning:x.y.z'
+```
 ## License
 
 ```
