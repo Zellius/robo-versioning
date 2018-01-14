@@ -1,7 +1,7 @@
 # RoboVersioning
 [![Build Status](https://travis-ci.org/Zellius/robo-versioning.svg?branch=master)](https://travis-ci.org/Zellius/robo-versioning)
 
-It is Android Gradle versioning plugin based on Git tags. You can set different versioning on BuildTypes and ProductFlavors. So you can have different versioning on a same git branch. Works well with git-flow and merge-commits. Tested on **com.android.tools.build:gradle:3.0.1**.
+RoboVersioning is Android Gradle versioning plugin based on Git tags. You can set different versioning on BuildTypes and ProductFlavors. So you can have different versioning on a same git branch. Works well with git-flow and merge-commits. Tested on **com.android.tools.build:gradle:3.0.1**.
 ## Base usage
 Set **versioningCalculator** to calculate versionName and versionCode like this:
 ```gradle
@@ -41,11 +41,11 @@ For each build variant the plugin will select a single **versioningCalculator** 
 
 Where are some brebuild **versioningCalculator**:
 - **TAG_DIGIT**: git tag pattern (\d+).(\d+).(\d+). For git tag _1.2.3_ the result will be: versionCode 10203, versionName 1.2.3. If where is no valid git tag the result wull be  versionCode 0, versionName 0.0.0.
-- **TAG_DIGIT_RC**: git tag pattern ((\d+).(\d+).(\d+)rc(\d+). For git tag _1.2.3rc4_ the result will be: versionCode 1020304, versionName 1.2.3rc4. If where is no valid git tag the result wull be  versionCode 0, versionName 0.0.0rc0.
+- **TAG_DIGIT_RC**: git tag pattern (\d+).(\d+).(\d+)rc(\d+). For git tag _1.2.3rc4_ the result will be: versionCode 1020304, versionName 1.2.3rc4. If where is no valid git tag the result wull be  versionCode 0, versionName 0.0.0rc0.
 - **TAG_DESCRIBE_DIGIT**: git tag pattern (\d+).(\d+).(\d+). For git tag _1.2.3_ the result will be: versionCode 10203, versionName 1.2.3-14-g2414721. If where is no valid git tag the result wull be  versionCode 0, versionName 0.0.0.
-- **TAG_DESCRIBE_DIGIT_RC**: git tag pattern ((\d+).(\d+).(\d+)rc(\d+). For git tag _1.2.3rc4_ the result will be: versionCode 1020304, versionName 1.2.3rc4-14-g2414721. If where is no valid git tag the result wull be  versionCode 0, versionName 0.0.0rc0.
+- **TAG_DESCRIBE_DIGIT_RC**: git tag pattern (\d+).(\d+).(\d+)rc(\d+). For git tag _1.2.3rc4_ the result will be: versionCode 1020304, versionName 1.2.3rc4-14-g2414721. If where is no valid git tag the result wull be  versionCode 0, versionName 0.0.0rc0.
 
-The plugin uses **git log --first-parent** command to parse and get list of tags. You can customize it.
+The plugin uses **git log --first-parent** command to get list of tags. If the command return some tags, plugin will iterate over them until valid tag is not found. This tag will be used to versioning your app. You can customize it.
 ## Global plugin customization
 Use it to change plugin's logger or git settings.
 ```gradle
@@ -88,15 +88,15 @@ roboVersioningFlavor {
         //you can customize standard digit versioning calculator
         
         //required. Regex pattern.
-        pattern = "(\\d+).(\\d+).(\\d+)" 
+        pattern = "(\\d+).(\\d+).(\\d+)"
+        //required. Used in the case if where is no valid tag for this calculator. You can set Map or Closure.
+        emptyVersion = ["name": "empty", "code": 123]
         //optional. Additional tag validation. You can set boolean on Closure.
         valid = {tag -> tag.hash == "123"} 
         //optional. You can calculate your own code based on parsed int array. You can set Integer or Closure.
         versionCode = {tagParts -> tagParts[0]}
          //optional. You can calculate your own name based on git tag. You can set String or Closure.
         versionName = {tag -> "custom_version_name"}
-         //required. Used in the case if where is no valid tag for this calculator. You can set Map or Closure.
-        emptyVersion = ["name": "empty", "code": 123]
     }
 }
 ```
@@ -124,7 +124,13 @@ roboVersioningFlavor {
 ```
 ###### Gradle:
 ```gradle
-compile 'com.github.zellius:robo-versioning:x.y.z'
+buildscript {
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.0.1'
+        classpath 'com.github.zellius:robo-versioning:x.y.z'
+    }
+}
+apply plugin: 'com.github.zellius.robo-versioning'
 ```
 ## License
 
