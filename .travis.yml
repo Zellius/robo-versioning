@@ -9,3 +9,10 @@ branches:
     - master
     - develop
     - /^v\d+\.\d+\.\d+$/
+deploy:
+  provider: script
+  script: ./gradlew bintrayUpload -PdryRun=false
+  skip_cleanup: true
+  on:
+    tags: true
+    branch: /^v\d+\.\d+\.\d+$/
