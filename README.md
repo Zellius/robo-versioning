@@ -45,7 +45,7 @@ Where are some brebuild **versioningCalculator**:
 - **TAG_DESCRIBE_DIGIT**: git tag pattern (\d+).(\d+).(\d+). For git tag _1.2.3_ the result will be: versionCode 10203, versionName 1.2.3-14-g2414721. If where is no valid git tag the result wull be  versionCode 0, versionName 0.0.0.
 - **TAG_DESCRIBE_DIGIT_RC**: git tag pattern (\d+).(\d+).(\d+)rc(\d+). For git tag _1.2.3rc4_ the result will be: versionCode 1020304, versionName 1.2.3rc4-14-g2414721. If where is no valid git tag the result wull be  versionCode 0, versionName 0.0.0rc0.
 
-The plugin uses **git log --first-parent** command to get list of tags. If the command return some tags, plugin will iterate over them until valid tag is not found. This tag will be used to versioning your app. You can customize it.
+The plugin uses **git --simplify-by-decoration --pretty=format:"%H|%ct|%d" --first-parent** command to get list of tags. If the command return some tags, plugin will iterate over them until valid tag is not found. This tag will be used to versioning your app. You can customize it.
 ## Global plugin customization
 Use it to change plugin's logger or git settings.
 ```gradle
