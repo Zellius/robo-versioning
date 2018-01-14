@@ -43,41 +43,8 @@ Where are some brebuild **versioningCalculator**:
 - **TAG_DESCRIBE_DIGIT**: git tag pattern (\d+).(\d+).(\d+). For git tag _1.2.3_ the result will be: versionCode 10203, versionName 1.2.3-14-g2414721. If where is no valid git tag the result wull be  versionCode 0, versionName 0.0.0.
 - **TAG_DESCRIBE_DIGIT_RC**: git tag pattern ((\d+).(\d+).(\d+)rc(\d+). For git tag _1.2.3rc4_ the result will be: versionCode 1020304, versionName 1.2.3rc4-14-g2414721. If where is no valid git tag the result wull be  versionCode 0, versionName 0.0.0rc0.
 
-Plugin uses **git log --first-parent** command to parse and get list of tags. You can customize it.
-
-##### Customize
-You can customize digit tag **versioningCalculator** like this:
-```gradle
-roboVersioningFlavor {
-    versioningCalculator customDigitTag {
-        //you can customize standard digit versioning calculator
-        
-        //required. Regex pattern.
-        pattern = "(\\d+).(\\d+).(\\d+)" 
-        //optional. Additional tag validation. You can set boolean on Closure.
-        valid = {tag -> tag.hash == "123"} 
-        //optional. You can calculate your own code based on parsed int array. You can set Integer or Closure.
-        versionCode = {tagParts -> tagParts[0]}
-         //optional. You can calculate your own name based on git tag. You can set String or Closure.
-        versionName = {tag -> "custom_version_name"}
-         //required. Used in the case if where is no valid tag for this calculator. You can set Map or Closure.
-        emptyVersion = ["name": "empty", "code": 123]
-    }
-}
-```
-Or you can write your own **versioningCalculator**:
-```gradle
-roboVersioningFlavor {
-    versioningCalculator { git ->
-        //you can extract data from git here
-        def tags = git.tags()
-        def describeTags = git.execute("describe --tags")
-        //do something and reurn result as below
-        ['name': 'custom', 'code': 123]
-    }
-}
-```
-##### Global plugin customization
+The plugin uses **git log --first-parent** command to parse and get list of tags. You can customize it.
+## Global plugin customization
 Use it to change plugin's logger or git settings.
 ```gradle
 roboVersioning {
@@ -110,6 +77,38 @@ roboVersioning {
 }
 
 android {}
+```
+## Flavor customization
+You can customize digit tag **versioningCalculator** like this:
+```gradle
+roboVersioningFlavor {
+    versioningCalculator customDigitTag {
+        //you can customize standard digit versioning calculator
+        
+        //required. Regex pattern.
+        pattern = "(\\d+).(\\d+).(\\d+)" 
+        //optional. Additional tag validation. You can set boolean on Closure.
+        valid = {tag -> tag.hash == "123"} 
+        //optional. You can calculate your own code based on parsed int array. You can set Integer or Closure.
+        versionCode = {tagParts -> tagParts[0]}
+         //optional. You can calculate your own name based on git tag. You can set String or Closure.
+        versionName = {tag -> "custom_version_name"}
+         //required. Used in the case if where is no valid tag for this calculator. You can set Map or Closure.
+        emptyVersion = ["name": "empty", "code": 123]
+    }
+}
+```
+Or you can write your own **versioningCalculator**:
+```gradle
+roboVersioningFlavor {
+    versioningCalculator { git ->
+        //you can extract data from git here
+        def tags = git.tags()
+        def describeTags = git.execute("describe --tags")
+        //do something and reurn result as below
+        ['name': 'custom', 'code': 123]
+    }
+}
 ```
 ## License
 
