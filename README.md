@@ -130,6 +130,8 @@ buildscript {
         classpath 'com.github.zellius:robo-versioning:x.y.z'
     }
 }
+//apply robo-versioning plugin after android plugin (application, library)
+apply plugin: 'com.android.application'
 apply plugin: 'com.github.zellius.robo-versioning'
 ```
 ## License
