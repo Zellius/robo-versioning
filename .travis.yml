@@ -1,0 +1,11 @@
+language: groovy
+jdk: oraclejdk8
+before_install:
+- chmod +x gradlew
+script:
+- ./gradlew clean build -PdisablePreDex --continue --stacktrace
+branches:
+  only:
+    - master
+    - develop
+    - /^v\d+\.\d+\.\d+$/
