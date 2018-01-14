@@ -1,16 +1,18 @@
 # RoboVersioning
-It is Android Gradle versioning plugin based on Git tags. You can set versioning on BuildTypes and ProductFlavors. Works well with git-flow and merge-commits.
-### How it works
+It is Android Gradle versioning plugin based on Git tags. You can set different versioning on BuildTypes and ProductFlavors. So you can have different versioning on a same git branch. Works well with git-flow and merge-commits. Tested on **com.android.tools.build:gradle:3.0.1**.
+## Base usage
 Set **versioningCalculator** to calculate versionName and versionCode like this:
 ```gradle
 android {
     defaultConfig {
+        //optional
         roboVersioningFlavor {
             versioningCalculator TAG_DESCRIBE_DIGIT_RC
         }
     }
     buildTypes {
         release {
+            //optional
             roboVersioningFlavor {
                 versioningCalculator TAG_DIGIT
             }
@@ -22,6 +24,7 @@ android {
     productFlavors {
         flavor {
             dimension "dimension"
+            //optional
             roboVersioningFlavor {
                 versioningCalculator TAG_DIGIT_RC
             }
@@ -39,6 +42,8 @@ Where are some brebuild **versioningCalculator**:
 - **TAG_DIGIT_RC**: git tag pattern ((\d+).(\d+).(\d+)rc(\d+). For git tag _1.2.3rc4_ the result will be: versionCode 1020304, versionName 1.2.3rc4. If where is no valid git tag the result wull be  versionCode 0, versionName 0.0.0rc0.
 - **TAG_DESCRIBE_DIGIT**: git tag pattern (\d+).(\d+).(\d+). For git tag _1.2.3_ the result will be: versionCode 10203, versionName 1.2.3-14-g2414721. If where is no valid git tag the result wull be  versionCode 0, versionName 0.0.0.
 - **TAG_DESCRIBE_DIGIT_RC**: git tag pattern ((\d+).(\d+).(\d+)rc(\d+). For git tag _1.2.3rc4_ the result will be: versionCode 1020304, versionName 1.2.3rc4-14-g2414721. If where is no valid git tag the result wull be  versionCode 0, versionName 0.0.0rc0.
+
+Plugin uses **git log --first-parent** command to parse and get list of tags. You can customize it.
 
 ##### Customize
 You can customize digit tag **versioningCalculator** like this:
@@ -105,4 +110,29 @@ roboVersioning {
 }
 
 android {}
+```
+## License
+
+```
+IT License
+
+Copyright (c) 2017 Sergey Solodovnikov
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
