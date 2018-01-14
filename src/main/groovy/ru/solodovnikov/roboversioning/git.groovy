@@ -77,7 +77,7 @@ class GitImpl implements Git {
      * @param command git command
      * @return
      */
-    private Process execute(String command) {
+    Process execute(String command) {
         logger.log("git command executed: $command")
 
         if (!command) {

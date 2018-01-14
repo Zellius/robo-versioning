@@ -63,22 +63,22 @@ class FlavorExtension {
     }
 
     void setVersioningCalculator(TagVersioning tagVersioning) {
-        this.versioningCalculator = new GitTagVersioningCalculator(tagVersioning, logger)
+        this.versioningCalculator = new GitTagVersioningCalculator(tagVersioning, projectExtension.logger)
     }
 
     void setVersioningCalculator(String versionCalculatorType) {
         switch (versionCalculatorType) {
             case TAG_DIGIT:
-                this.versioningCalculator = new GitTagVersioningCalculator(new ReleaseDigitTagVersioning(), logger)
+                this.versioningCalculator = new GitTagVersioningCalculator(new ReleaseDigitTagVersioning(), projectExtension.logger)
                 break
             case TAG_DIGIT_RC:
-                this.versioningCalculator = new GitTagVersioningCalculator(new ReleaseCandidateDigitTagVersioning(), logger)
+                this.versioningCalculator = new GitTagVersioningCalculator(new ReleaseCandidateDigitTagVersioning(), projectExtension.logger)
                 break
             case TAG_DESCRIBE_DIGIT:
-                this.versioningCalculator = new GitTagDescribeVersionCalculator(new ReleaseCandidateDigitTagVersioning(), logger)
+                this.versioningCalculator = new GitTagDescribeVersionCalculator(new ReleaseCandidateDigitTagVersioning(), projectExtension.logger)
                 break
             case TAG_DESCRIBE_DIGIT_RC:
-                this.versioningCalculator = new GitTagDescribeVersionCalculator(new ReleaseCandidateDigitTagVersioning(), logger)
+                this.versioningCalculator = new GitTagDescribeVersionCalculator(new ReleaseCandidateDigitTagVersioning(), projectExtension.logger)
                 break
             default:
                 throw new IllegalArgumentException("Unknown versionCalculatorType $versionCalculatorType")
@@ -89,7 +89,7 @@ class FlavorExtension {
         this.versioningCalculator = { git -> new RoboVersion(closure.call(git)) }
     }
 
-    TagVersioning customTagDigit(Closure closure) {
+    TagVersioning customDigitTag(Closure closure) {
         final CustomDigitTag customDigitTag = project.configure(new CustomDigitTag(), closure)
         return new BaseDigitTagVersioning(customDigitTag.pattern) {
             @Override
@@ -142,9 +142,5 @@ class FlavorExtension {
                 }
             }
         }
-    }
-
-    private Logger getLogger(){
-        return projectExtension.logger
     }
 }
