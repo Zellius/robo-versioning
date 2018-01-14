@@ -2,8 +2,81 @@ apply from: './gradle/version.gradle'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 
+def lib_tag = project.hasProperty('tag') ? project.property('tag') : System.getenv('TRAVIS_TAG')
+
+if (lib_tag?.trim()) {
+    plugin_version = (lib_tag =~ /v(\d+\.\d+\.\d+)/)[0][1]
+}
+
 group = 'com.github.zellius'
 version plugin_version
+
+def repository_url = "https://github.com/Zellius/${project.name}"
+def lib_description = 'It is Android Gradle versioning plugin based on Git tags. You can set different versioning on BuildTypes and ProductFlavors. So you can have different versioning on a same git branch. Works well with git-flow and merge-commits.'
+
+publishing {
+    publications {
+        PluginPublication(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+            artifact groovydocJar
+            artifact javadocJar
+
+            groupId project.group
+            artifactId "$project.name"
+            version project.version
+
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('name', project.name)
+                root.appendNode('description', lib_description)
+                root.appendNode('url', repository_url)
+                root.appendNode('inceptionYear', Calendar.instance.get(Calendar.YEAR))
+
+                def scm = root.appendNode('scm')
+                scm.appendNode('url', repository_url)
+                scm.appendNode('connection', "scm:https://zellius@github.com/zellius/${project.name}.git")
+                scm.appendNode('developerConnection', "scm:git://github.com/zellius/${project.name}.git")
+
+                def license = root.appendNode('licenses').appendNode('license')
+                license.appendNode('name', 'MIT')
+                license.appendNode('url', "https://raw.github.com/zellius/${project.name}/master/LICENSE")
+                license.appendNode('distribution', 'repo')
+
+                def developers = root.appendNode('developers')
+                def developer = developers.appendNode('developer')
+                developer.appendNode('id', 'zellius')
+                developer.appendNode('name', 'Sergey Solodovnikov')
+                developer.appendNode('email', 'elementa.ru@gmail.com')
+            }
+        }
+    }
+}
+
+bintray {
+    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+    publications = ['PluginPublication']
+    pkg {
+        repo = 'maven'
+        name = project.name
+        desc = lib_description
+        licenses = ['MIT']
+        websiteUrl = repository_url
+        issueTrackerUrl = "$repository_url/issues"
+        vcsUrl = "${repository_url}.git"
+
+        labels = ['android', 'plugin', 'gradle', 'git', 'versioning']
+
+        githubRepo = "Zellius/${project.name}"
+        githubReleaseNotesFile = 'README.md'
+
+        version {
+            name = project.version
+            vcsTag = "v${project.version}"
+        }
+    }
+}
 
 task sourcesJar(type: Jar) {
     classifier 'sources'
