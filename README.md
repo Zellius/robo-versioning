@@ -113,7 +113,6 @@ roboVersioningFlavor {
 }
 ```
 ## Download
-##### rxJava1
 [ ![Download](https://api.bintray.com/packages/zellius/maven/robo-versioning/images/download.svg) ](https://bintray.com/zellius/maven/robo-versioning/_latestVersion)
 ###### Maven:
 ```xml
