@@ -1,4 +1,6 @@
 # RoboVersioning
+[![Build Status](https://travis-ci.org/Zellius/robo-versioning.svg?branch=master)](https://travis-ci.org/Zellius/robo-versioning)
+
 It is Android Gradle versioning plugin based on Git tags. You can set different versioning on BuildTypes and ProductFlavors. So you can have different versioning on a same git branch. Works well with git-flow and merge-commits. Tested on **com.android.tools.build:gradle:3.0.1**.
 ## Base usage
 Set **versioningCalculator** to calculate versionName and versionCode like this:
