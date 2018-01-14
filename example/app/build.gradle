@@ -1,6 +1,10 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.github.zellius.robo-versioning'
 
+roboVersioning{
+    //quiet()
+}
+
 android {
     compileSdkVersion 26
     defaultConfig {
@@ -30,7 +34,13 @@ android {
             versionNameSuffix ".asd"
             dimension "dim1"
             roboVersioningFlavor {
-                versioningCalculator TAG_DIGIT
+                versioningCalculator customTagDigit {
+                    pattern = "(\\d+).(\\d+).(\\d+)"
+                    valid = {false}
+                    versionCode = {214}
+                    versionName = "asjfasjhfasjh"
+                    emptyVersion = {["name":"empty", "code":123]}
+                }
             }
 
         }

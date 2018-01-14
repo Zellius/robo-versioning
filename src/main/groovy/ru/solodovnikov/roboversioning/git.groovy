@@ -3,6 +3,9 @@ package ru.solodovnikov.roboversioning
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.Immutable
 
+/**
+ * Git interface
+ */
 interface Git {
     /**
      * Get git tags
@@ -15,13 +18,6 @@ interface Git {
      * @return
      */
     String describe(String hash)
-
-    /**
-     * Execute git command
-     * @param command git command
-     * @return
-     */
-    Process execute(String command)
 
     /**
      * Git tag
@@ -76,8 +72,12 @@ class GitImpl implements Git {
         return execute(command).getText()
     }
 
-    @Override
-    Process execute(String command) {
+    /**
+     * Execute git command
+     * @param command git command
+     * @return
+     */
+    private Process execute(String command) {
         logger.log("git command executed: $command")
 
         if (!command) {

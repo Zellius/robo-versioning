@@ -2,24 +2,10 @@ package ru.solodovnikov.roboversioning
 
 import org.gradle.api.Project
 
-import java.util.regex.Pattern
-
 class ProjectExtension {
     private final Project project
 
-    String git = 'git'
-    /**
-     * params for get git tags command
-     */
-    String tagsParams = '--first-parent'
-    /**
-     * params for describe git command
-     */
-    String describeParams = '--first-parent'
-    /**
-     * Custom git implementation
-     */
-    Git gitImplementation
+    def git
 
     Logger logger = new LoggerImpl()
 
@@ -27,33 +13,35 @@ class ProjectExtension {
         this.project = project
     }
 
-    void gitPath(String path) {
-        setGit(project.file(path))
+    void setGit(Closure closure) {
+        git = project.configure(new GitDsl(), closure)
     }
 
-    void gitPath(File git) {
-        setGit(git)
+    void setGit(Git git) {
+        this.git = git
     }
 
-    private void setGit(File git) {
-        if (!git.isFile()) {
-            throw new IllegalArgumentException("$git is not a file")
-        }
-        this.git = git.absolutePath
-    }
-
-    Git getGitImplementation() {
-        if (gitImplementation != null) {
-            return gitImplementation
+    Git getGit() {
+        if (git) {
+            if (git instanceof GitDsl) {
+                return calculateGit(git)
+            }
+            return git
         } else {
-            return new GitImpl(git, tagsParams, describeParams, logger)
+            return calculateGit()
         }
     }
 
-    void setLogger(boolean isEnabled) {
-        if (!isEnabled) {
-            this.logger = {}
-        }
+    private Git calculateGit(GitDsl gitDsl = new GitDsl()) {
+        return new GitImpl(gitDsl.gitPath, gitDsl.tagsParams, gitDsl.describeParams, logger)
+    }
+
+    void quiet() {
+        this.logger = {}
+    }
+
+    void setLogger(Closure<Void> loggerClosure) {
+        this.logger = loggerClosure
     }
 }
 
@@ -64,13 +52,14 @@ class FlavorExtension {
     static final String TAG_DESCRIBE_DIGIT = 'tag_describe_digit'
     static final String TAG_DESCRIBE_DIGIT_RC = 'tag_describe_digit_rc'
 
-    VersionCalculator versioningCalculator
-    Logger logger = new LoggerImpl()
+    private final Project project
+    private final ProjectExtension projectExtension
 
-    void setLogger(boolean isEnabled) {
-        if (!isEnabled) {
-            this.logger = {}
-        }
+    VersionCalculator versioningCalculator
+
+    FlavorExtension(Project project, ProjectExtension projectExtension) {
+        this.project = project
+        this.projectExtension = projectExtension
     }
 
     void setVersioningCalculator(TagVersioning tagVersioning) {
@@ -100,15 +89,18 @@ class FlavorExtension {
         this.versioningCalculator = { git -> new RoboVersion(closure.call(git)) }
     }
 
-    TagVersioning customTagDigit(Pattern pattern,
-                                     Closure<Boolean> validClosure = null,
-                                     Closure<String> nameClosure = null,
-                                     Closure<Integer> codeClosure = null,
-                                     Closure<Map<String, Object>> emptyClosure) {
-        return new BaseDigitTagVersioning(pattern) {
+    TagVersioning customTagDigit(Closure closure) {
+        final CustomDigitTag customDigitTag = project.configure(new CustomDigitTag(), closure)
+        return new BaseDigitTagVersioning(customDigitTag.pattern) {
             @Override
             RoboVersion empty() {
-                return new RoboVersion(emptyClosure.call())
+                def versionMap
+                if (customDigitTag.emptyVersion instanceof Map) {
+                    versionMap = customDigitTag.emptyVersion
+                } else {
+                    versionMap = customDigitTag.emptyVersion.call()
+                }
+                return new RoboVersion(versionMap)
             }
 
             @Override
@@ -119,17 +111,20 @@ class FlavorExtension {
                     return false
                 }
 
-                if(validClosure){
-                    return validClosure.call(tag)
+                if (customDigitTag.valid instanceof Boolean) {
+                    return customDigitTag.valid
                 }
 
-                return true
+                return customDigitTag.valid.call(tag)
             }
 
             @Override
             protected String calculateVersionName(Git.Tag tag) {
-                if (nameClosure) {
-                    return nameClosure.call(tag)
+                if (customDigitTag.versionName) {
+                    if (customDigitTag.versionName instanceof String) {
+                        return customDigitTag.versionName
+                    }
+                    return customDigitTag.versionName.call(tag)
                 } else {
                     return super.calculateVersionName(tag)
                 }
@@ -137,12 +132,19 @@ class FlavorExtension {
 
             @Override
             protected int calculateVersionCode(Integer[] parsedDigits) {
-                if (codeClosure) {
-                    return codeClosure.call(parsedDigits)
+                if (customDigitTag.versionCode) {
+                    if (customDigitTag.versionCode instanceof Integer) {
+                        return customDigitTag.versionCode
+                    }
+                    return customDigitTag.versionCode.call(parsedDigits)
                 } else {
                     return super.calculateVersionCode(parsedDigits)
                 }
             }
         }
+    }
+
+    private Logger getLogger(){
+        return projectExtension.logger
     }
 }

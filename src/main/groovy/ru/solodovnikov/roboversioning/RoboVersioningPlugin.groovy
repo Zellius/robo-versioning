@@ -35,13 +35,13 @@ class RoboVersioningPlugin implements Plugin<Project> {
             throw new GradleException('Please apply com.android.application or com.android.library plugin before apply this plugin!')
         }
 
-        final ProjectExtension globalExtension = project.extensions.create(GLOBAL_EXTENSION_NAME, ProjectExtension, project)
+        final ProjectExtension projectExtension = project.extensions.create(GLOBAL_EXTENSION_NAME, ProjectExtension, project)
 
         prepareFlavorExtension()
 
         project.afterEvaluate {
-            final Git git = globalExtension.gitImplementation
-            final Logger logger = globalExtension.logger
+            final Git git = projectExtension.git
+            final Logger logger = projectExtension.logger
 
             getAndroidVariants().all { variant ->
                 final VersionCalculator resultVersioning = ((variant.productFlavors[PROJECT_EXTENSION_NAME]*.versioningCalculator +
@@ -116,7 +116,7 @@ class RoboVersioningPlugin implements Plugin<Project> {
 
     private void registerFlavorExtension(flavor) {
         if (!flavor.extensions.findByName(PROJECT_EXTENSION_NAME)) {
-            flavor.extensions.create(PROJECT_EXTENSION_NAME, FlavorExtension)
+            flavor.extensions.create(PROJECT_EXTENSION_NAME, FlavorExtension, project, project[GLOBAL_EXTENSION_NAME])
         }
     }
 
