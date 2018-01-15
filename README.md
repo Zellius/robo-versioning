@@ -103,7 +103,7 @@ roboVersioningFlavor {
 Or you can write your own **versioningCalculator**:
 ```gradle
 roboVersioningFlavor {
-    versioningCalculator { git ->
+    versioningCalculator { git, variant ->
         //you can extract data from git here
         def tags = git.tags()
         def describeTags = git.execute("describe --tags")
