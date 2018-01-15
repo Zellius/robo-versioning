@@ -86,7 +86,7 @@ class FlavorExtension {
     }
 
     void setVersioningCalculator(Closure<Map<String, Object>> closure) {
-        this.versioningCalculator = { git -> new RoboVersion(closure.call(git)) }
+        this.versioningCalculator = { git, variant -> new RoboVersion(closure.call(git, variant)) }
     }
 
     TagVersioning customDigitTag(Closure closure) {

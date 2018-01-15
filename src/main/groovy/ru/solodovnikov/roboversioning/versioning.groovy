@@ -1,7 +1,8 @@
 package ru.solodovnikov.roboversioning
 
+import com.android.build.gradle.api.BaseVariant
 import groovy.transform.EqualsAndHashCode
-import groovy.transform.Immutable
+import groovy.transform.TupleConstructor
 
 import java.util.regex.Pattern
 
@@ -9,7 +10,7 @@ import java.util.regex.Pattern
  * Calculated VersionName and VersionCode for Android application
  */
 @EqualsAndHashCode
-@Immutable
+@TupleConstructor
 class RoboVersion {
     /**
      * VersionName
@@ -28,9 +29,10 @@ interface VersionCalculator {
     /**
      * Calculate current android version
      * @param git configured git implementation
+     * @param variant for which version will be calculated
      * @return calculated android version
      */
-    RoboVersion calculate(Git git)
+    RoboVersion calculate(Git git, BaseVariant variant)
 }
 
 /**
@@ -91,29 +93,33 @@ class GitTagVersioningCalculator implements VersionCalculator {
     }
 
     @Override
-    RoboVersion calculate(Git git) {
+    RoboVersion calculate(Git git, BaseVariant variant) {
         final List<Git.Tag> tags = git.tags()
 
-        logger.log("tags ${tags?.name ?: 'empty'}")
+        logger.log("<${variant.name}> tags ${tags?.name ?: 'empty'}")
 
         return (tags?.find { versioning.isTagValid(it) } ?: null).with { Git.Tag tag ->
             final RoboVersion calculatedVersion
 
             if (!tag) {
-                logger.log("there is no valid tag for build variant")
+                logger.log("<${variant.name}> there is no valid tag for build variant")
                 calculatedVersion = versioning.empty()
             } else {
-                logger.log("valid tag is ${tag.name}")
-                calculatedVersion = calculate(tag)
+                logger.log("<${variant.name}> valid tag is ${tag.name}")
+                calculatedVersion = calculate(git, tag, variant)
             }
 
-            logger.log("tag calculated version $calculatedVersion")
+            if (variant.mergedFlavor.versionNameSuffix) {
+                calculatedVersion.name = calculatedVersion.name + variant.mergedFlavor.versionNameSuffix
+            }
+
+            logger.log("<${variant.name}> tag calculated version $calculatedVersion")
 
             return calculatedVersion
         }
     }
 
-    protected RoboVersion calculate(Git.Tag tag) {
+    protected RoboVersion calculate(Git git, Git.Tag tag, BaseVariant variant) {
         return versioning.calculate(tag)
     }
 }
@@ -127,7 +133,7 @@ class GitTagDescribeVersionCalculator extends GitTagVersioningCalculator {
     }
 
     @Override
-    protected RoboVersion calculate(Git.Tag tag) {
+    protected RoboVersion calculate(Git git, Git.Tag tag, BaseVariant variant) {
         return new RoboVersion(versioning.versionCode(tag), git.describe(tag.hash))
     }
 }

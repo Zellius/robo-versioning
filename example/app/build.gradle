@@ -43,7 +43,7 @@ android {
         customVersioning {
             dimension "dimension"
             roboVersioningFlavor {
-                versioningCalculator { git ->
+                versioningCalculator { git, variant ->
                     //you can extract data from git here
                     git.tags()
                     git.execute("describe --tags")
@@ -57,8 +57,7 @@ android {
             roboVersioningFlavor {
                 versioningCalculator customDigitTag {
                     //you can customize standard digit versioning calculator
-                    pattern = "(\\d+).(\\d+).(\\d+)"
-                    valid = false
+                    pattern = "v(\\d+).(\\d+).(\\d+)"
                     versionCode = 214
                     versionName = "custom_version_name"
                     emptyVersion = ["name": "empty", "code": 123]

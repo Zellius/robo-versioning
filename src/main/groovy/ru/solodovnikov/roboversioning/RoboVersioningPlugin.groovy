@@ -52,7 +52,7 @@ class RoboVersioningPlugin implements Plugin<Project> {
                 logger.log("<${variant.name}> versioning type ${resultVersioning?.class?.typeName ?: 'null'}")
 
                 if (resultVersioning != null) {
-                    final def version = resultVersioning.calculate(git)
+                    final def version = resultVersioning.calculate(git, variant)
 
                     checkVersion(version)
 
@@ -73,7 +73,7 @@ class RoboVersioningPlugin implements Plugin<Project> {
                         if (it.metaClass.respondsTo(it, "getApkData")) {
                             it.apkData.with {
                                 it.versionCode = version.code
-                                it.versionName = version.name + variant.mergedFlavor.versionNameSuffix
+                                it.versionName = version.name
                             }
                         }
                     }
