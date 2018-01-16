@@ -109,13 +109,6 @@ class GitTagVersioningCalculator implements VersionCalculator {
                 calculatedVersion = calculate(git, tag, variant)
             }
 
-            //Use version name suffix from flavor and buildType, as default Android Implementation
-            def versionNameSuffix = "${variant.mergedFlavor.versionNameSuffix ?: ''}${variant.buildType.versionNameSuffix ?: ''}"
-
-            if (versionNameSuffix) {
-                calculatedVersion.name = calculatedVersion.name + versionNameSuffix
-            }
-
             logger.log("<${variant.name}> tag calculated version $calculatedVersion")
 
             return calculatedVersion
