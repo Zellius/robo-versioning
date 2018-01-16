@@ -23,6 +23,7 @@ android {
     buildTypes {
         release {
             minifyEnabled false
+            versionNameSuffix ".buildTypeSuffix"
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             roboVersioningFlavor {
                 versioningCalculator TAG_DIGIT
@@ -52,7 +53,7 @@ android {
             }
         }
         customDigitTag {
-            versionNameSuffix ".asd"
+            versionNameSuffix ".flavorSuffix"
             dimension "dimension"
             roboVersioningFlavor {
                 versioningCalculator customDigitTag {

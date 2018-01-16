@@ -137,7 +137,7 @@ apply plugin: 'com.github.zellius.robo-versioning'
 ## License
 
 ```
-IT License
+MIT License
 
 Copyright (c) 2017 Sergey Solodovnikov
 
