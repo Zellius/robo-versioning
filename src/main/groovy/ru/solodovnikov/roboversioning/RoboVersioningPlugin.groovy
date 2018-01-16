@@ -65,18 +65,17 @@ class RoboVersioningPlugin implements Plugin<Project> {
                                 it.versionName = version.name
                                 it.versionCode = version.code
                             }
-                        }
-                    }))
-
-                    //put versioning to the manifest (bad implementation...)
-                    variant.outputs.all {
-                        if (it.metaClass.respondsTo(it, "getApkData")) {
-                            it.apkData.with {
-                                it.versionCode = version.code
-                                it.versionName = version.name
+                            //put versioning to the manifest (bad implementation...)
+                            variant.outputs.all {
+                                if (it.metaClass.respondsTo(it, "getApkData")) {
+                                    it.apkData.with {
+                                        it.versionCode = variant.variantData.variantConfiguration.versionCode
+                                        it.versionName = variant.variantData.variantConfiguration.versionName
+                                    }
+                                }
                             }
                         }
-                    }
+                    }))
                 }
             }
         }
